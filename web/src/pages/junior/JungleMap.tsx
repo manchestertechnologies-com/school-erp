@@ -8,11 +8,11 @@ export type RoomKey = 'trace' | 'count' | 'shape' | 'colour' | 'rhyme';
 
 /** The five hotspots from the design direction, placed on a jungle map. Each target is at least 96px. */
 export const SPOTS: { key: RoomKey; title: string; sub: string; x: number; y: number; color: string; kind: CharKind }[] = [
-  { key: 'trace', title: 'Alphabet Tree', sub: 'Trace letters', x: 18, y: 34, color: '#a7f3d0', kind: 'momo' },
-  { key: 'shape', title: 'Shape Meadow', sub: 'Find the shape', x: 80, y: 30, color: '#fde68a', kind: 'ellie' },
-  { key: 'count', title: 'Number River', sub: 'Count and win', x: 50, y: 58, color: '#bae6fd', kind: 'ellie' },
-  { key: 'colour', title: 'Colour Cave', sub: 'Paint freely', x: 20, y: 80, color: '#fbcfe8', kind: 'bubbles' },
-  { key: 'rhyme', title: 'Story Den', sub: 'Rhymes and stories', x: 80, y: 80, color: '#fed7aa', kind: 'leo' },
+  { key: 'trace', title: 'ABC Garden', sub: 'Trace letters', x: 18, y: 34, color: '#a7f3d0', kind: 'momo' },
+  { key: 'shape', title: 'Puzzle Forest', sub: 'Find the shape', x: 80, y: 30, color: '#fde68a', kind: 'ellie' },
+  { key: 'count', title: 'Number Island', sub: 'Count and win', x: 50, y: 58, color: '#bae6fd', kind: 'ellie' },
+  { key: 'colour', title: 'Creative Corner', sub: 'Paint freely', x: 20, y: 80, color: '#fbcfe8', kind: 'bubbles' },
+  { key: 'rhyme', title: 'Rhymes and Stories', sub: 'Rhymes and stories', x: 80, y: 80, color: '#fed7aa', kind: 'leo' },
 ];
 
 export function JungleMap({ available, onOpen, view3d = false }: { available: Partial<Record<RoomKey, boolean>>; onOpen: (k: RoomKey) => void; view3d?: boolean }) {

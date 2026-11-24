@@ -35,6 +35,20 @@ function auth(req, res, next) {
 const need = (...roles) => (req, res, next) =>
   roles.includes(req.user.role) ? next() : res.status(403).json({ error: 'You do not have permission for this.' });
 
+// Demo accounts for the sign-in page, grouped by interface. Set DEMO_ACCOUNTS=0 to hide them.
+app.get('/api/demo-accounts', (req, res) => {
+  if (process.env.DEMO_ACCOUNTS === '0') return res.json([]);
+  const students = db.prepare(`SELECT u.username, u.name, c.name AS class_name, c.band FROM users u
+    JOIN students st ON st.user_id = u.id JOIN classes c ON c.id = st.class_id ORDER BY st.admission_no`).all()
+    .map((r) => ({ username: r.username, name: r.name, role: 'STUDENT', group: r.band.toLowerCase(), band: r.band, class_name: r.class_name }));
+  const parents = db.prepare(`SELECT u.username, u.name, st.name AS child, c.name AS class_name, c.band FROM users u
+    JOIN students st ON st.parent_user_id = u.id JOIN classes c ON c.id = st.class_id
+    WHERE u.role = 'PARENT' ORDER BY st.admission_no`).all()
+    .map((r) => ({ username: r.username, name: r.name, role: 'PARENT', group: 'parent', band: r.band, class_name: `${r.child} · ${r.class_name}` }));
+  const staff = db.prepare("SELECT username, name, role FROM users WHERE role IN ('ADMIN','TEACHER','OFFICE') ORDER BY role, username").all()
+    .map((r) => ({ ...r, group: 'staff' }));
+  res.json([...students, ...parents, ...staff]);
+});
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body || {};
   const u = db.prepare('SELECT * FROM users WHERE username = ?').get(String(username || '').toLowerCase());
@@ -431,6 +445,12 @@ app.post('/api/learning/:activityId/complete', auth, need('STUDENT', 'PARENT'), 
   res.json({ ok: true });
 });
 
+app.get('/api/learning/today/:studentId', auth, (req, res) => {
+  const id = Number(req.params.studentId);
+  if (!canSeeStudent(req.user, id)) return res.status(404).json({ error: 'Student not found.' });
+  const r = db.prepare("SELECT COUNT(*) AS n FROM learning_progress WHERE student_id = ? AND date(completed_at, 'localtime') = date('now', 'localtime')").get(id);
+  res.json({ done_today: r.n, target: 3 });
+});
 app.get('/api/learning/progress/:studentId', auth, (req, res) => {
   const id = Number(req.params.studentId);
   if (!canSeeStudent(req.user, id)) return res.status(404).json({ error: 'Student not found.' });

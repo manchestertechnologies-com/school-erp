@@ -18,14 +18,6 @@ export function ParentPortal({ onOpenJungle }: { onOpenJungle: (studentId: numbe
   return (
     <Shell items={NAV} active={tab} onNav={setTab} title="Parent portal" subtitle="Your children's progress, fees and school news.">
       {kids.error && <div className="error">{kids.error}</div>}
-      {kids.data && (
-        <div className="row" style={{ marginBottom: 16 }}>
-          {kids.data.map((k) => (
-            <button key={k.id} className="btn" aria-pressed={k.id === sid} onClick={() => setSid(k.id)}
-              style={k.id === sid ? { background: '#a3161b', color: '#fff', borderColor: '#a3161b' } : undefined}>{k.name} · {k.class_name}</button>
-          ))}
-        </div>
-      )}
       {sid != null && tab === 'overview' && <Overview sid={sid} onOpenJungle={onOpenJungle} band={child?.band} />}
       {sid != null && tab === 'homework' && <HomeworkView sid={sid} />}
       {sid != null && tab === 'results' && <Results sid={sid} />}

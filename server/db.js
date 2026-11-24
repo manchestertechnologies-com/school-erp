@@ -1,3 +1,4 @@
+import { KA_SUBJECTS, subjectTeacher } from './syllabus.js';
 import { DatabaseSync } from 'node:sqlite';
 import bcrypt from 'bcryptjs';
 import fs from 'node:fs';
@@ -40,7 +41,7 @@ CREATE TABLE IF NOT EXISTS students (
   gender TEXT,
   class_id INTEGER NOT NULL REFERENCES classes(id),
   user_id INTEGER UNIQUE REFERENCES users(id),        -- student login (Class 6+ only)
-  parent_user_id INTEGER REFERENCES users(id),        -- parent login (all classes)
+  parent_user_id INTEGER REFERENCES users(id),        -- parent login (one per child)
   hero TEXT,                                           -- avatar chosen in Classes 4-7
   status TEXT NOT NULL DEFAULT 'ACTIVE'
 );
@@ -202,13 +203,12 @@ function seed() {
   const teacher2 = ins('teacher2@demo.school', 'Mr. Arjun Mehta', 'TEACHER');
   const office = ins('office@demo.school', 'Office – Kavya', 'OFFICE');
   const parent = ins('parent@demo.school', 'Mr. Suresh Kumar (parent)', 'PARENT');
-  const parent2 = ins('parent2@demo.school', 'Mrs. Lakshmi Iyer (parent)', 'PARENT');
 
   const at = db.prepare('INSERT INTO teacher_assignments (teacher_user_id, class_id, subject) VALUES (?,?,?)');
   for (const name of Object.keys(classIds)) {
-    at.run(teacher, classIds[name], 'English');
-    at.run(teacher, classIds[name], 'Maths');
-    at.run(teacher2, classIds[name], 'Science');
+    for (const sub of KA_SUBJECTS[bandOf(levels.find(([n]) => n === name)[1])]) {
+      at.run(sub === 'Science' || sub === 'Social Science' ? teacher2 : teacher, classIds[name], sub);
+    }
   }
 
   // Students: 4 per class. Class 6+ get their own student login.
@@ -219,16 +219,17 @@ function seed() {
   let n = 0;
   const studentIds = {};
   let adm = 1000;
-  const parentFor = (i) => (i % 2 === 0 ? parent : parent2);
   for (const [cname, lvl] of levels) {
     for (let k = 0; k < 4; k++) {
       const nm = names[n % names.length] + ' ' + ['Sharma','Rao','Patel','Das'][k];
       const gender = (n % 2 === 0) ? 'F' : 'M';
       let studentLogin = null;
-      if (lvl >= 8) { // Class 6 (level 8) onward gets an independent student login
+      { // every student gets their own login, shown on their interface's sign-in page
         studentLogin = Number(addUserLogin.run(`student${adm}@demo.school`, bcrypt.hashSync('Demo@12345', 10), nm, 'STUDENT').lastInsertRowid);
       }
-      const sid = Number(addStudent.run(`ADM-${adm++}`, nm, gender, classIds[cname], studentLogin, parentFor(n), heroes[n % heroes.length]).lastInsertRowid);
+      // one parent login per child; the first child's parent keeps parent@demo.school
+      const parentUser = adm === 1000 ? parent : ins(`parent${adm}@demo.school`, `Parent of ${nm}`, 'PARENT');
+      const sid = Number(addStudent.run(`ADM-${adm++}`, nm, gender, classIds[cname], studentLogin, parentUser, heroes[n % heroes.length]).lastInsertRowid);
       studentIds[`${cname}#${k}`] = sid;
       n++;
     }
@@ -292,12 +293,11 @@ function seed() {
 
   // Timetable for every class: Mon-Sat, 6 periods
   const addTT = db.prepare('INSERT INTO timetable_entries (class_id, weekday, period, subject, teacher_name) VALUES (?,?,?,?,?)');
-  const subjects = ['English', 'Maths', 'Science', 'Social Studies', 'Hindi', 'Computer'];
-  const teacherFor = { English: 'Ms. Priya Nair', Maths: 'Ms. Priya Nair', Science: 'Mr. Arjun Mehta', 'Social Studies': 'Mrs. Rao', Hindi: 'Mrs. Rao', Computer: 'Mr. Arjun Mehta' };
-  Object.values(classIds).forEach((cid, ci) => {
+  Object.entries(classIds).forEach(([name, cid], ci) => {
+    const subs = KA_SUBJECTS[bandOf(levels.find(([n]) => n === name)[1])];
     for (let wd = 1; wd <= 6; wd++) for (let p = 1; p <= 6; p++) {
-      const sub = subjects[(p + wd + ci) % subjects.length];
-      addTT.run(cid, wd, p, sub, teacherFor[sub]);
+      const sub = subs[(p + wd + ci) % subs.length];
+      addTT.run(cid, wd, p, sub, subjectTeacher(sub));
     }
   });
 
@@ -325,8 +325,8 @@ function seed() {
     ['MIDDLE', 'MISSION', 'Maths · Decimals: 0.5 as a fraction', JSON.stringify({ subject: 'Maths', chapter: 'Decimals', question: 'Which fraction equals 0.5?', options: ['1/5', '1/2', '2/5'], answer: '1/2', xp: 35 }), 2],
     ['MIDDLE', 'MISSION', 'English · Nouns and verbs', JSON.stringify({ subject: 'English', chapter: 'Grammar', question: 'Which word is a verb?', options: ['Happy', 'Run', 'Table'], answer: 'Run', xp: 30 }), 1],
     ['MIDDLE', 'MISSION', 'English · Adjectives', JSON.stringify({ subject: 'English', chapter: 'Grammar', question: 'Which word is an adjective in "the bright sun"?', options: ['bright', 'sun', 'the'], answer: 'bright', xp: 35 }), 2],
-    ['MIDDLE', 'MISSION', 'Geography · Seven continents', JSON.stringify({ subject: 'Geography', chapter: 'Continents', question: 'Which is the largest continent?', options: ['Africa', 'Asia', 'Europe'], answer: 'Asia', xp: 40 }), 1],
-    ['MIDDLE', 'MISSION', 'Geography · Famous rivers', JSON.stringify({ subject: 'Geography', chapter: 'Rivers', question: 'Which river flows through Egypt?', options: ['Nile', 'Amazon', 'Ganga'], answer: 'Nile', xp: 35 }), 2],
+    ['MIDDLE', 'MISSION', 'Social Science · Seven continents', JSON.stringify({ subject: 'Social Science', chapter: 'Continents', question: 'Which is the largest continent?', options: ['Africa', 'Asia', 'Europe'], answer: 'Asia', xp: 40 }), 1],
+    ['MIDDLE', 'MISSION', 'Social Science · Famous rivers', JSON.stringify({ subject: 'Social Science', chapter: 'Rivers', question: 'Which river flows through Egypt?', options: ['Nile', 'Amazon', 'Ganga'], answer: 'Nile', xp: 35 }), 2],
     ['SENIOR', 'MISSION', 'Algebra: linear equations quiz', JSON.stringify({ subject: 'Maths', question: 'Solve 2x + 3 = 11', options: ['x = 3', 'x = 4', 'x = 5'], answer: 'x = 4', xp: 40 }), 1],
   ];
   for (const a of acts) addAct.run(...a);

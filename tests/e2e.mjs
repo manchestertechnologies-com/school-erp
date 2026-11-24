@@ -35,15 +35,13 @@ ok('wrong password shows error', (await page.textContent('body')).includes('inco
 
 // 2. Nursery–Class 3 Jungle via parent
 await signIn('parent@demo.school');
-const openJungle = page.getByRole('button', { name: /Open Momo/ });
-ok('parent sees jungle option for junior child', (await openJungle.count()) > 0);
-await openJungle.first().click();
 await page.waitForSelector('text=Momo’s Jungle', { timeout: 6000 }).catch(() => {});
+ok('parent lands directly in Momo’s Jungle', (await page.textContent('body')).includes('Momo’s Jungle'));
 ok('jungle map renders', (await page.textContent('body')).includes('Momo’s Jungle'));
 await page.waitForTimeout(800);
 
 // five hotspots from the design direction, each at least 96px
-const names = ['Alphabet Tree', 'Number River', 'Shape Meadow', 'Colour Cave', 'Story Den'];
+const names = ['ABC Garden', 'Number Island', 'Puzzle Forest', 'Creative Corner', 'Rhymes and Stories'];
 for (const n of names) {
   const btn = page.locator('.jungle-map .spot', { hasText: n });
   const count = await btn.count();
@@ -55,8 +53,8 @@ for (const n of names) {
 }
 await page.screenshot({ path: 'tests/screens/02-junior-map.png' });
 
-// Colour Cave: the colouring fix (measure the canvas after each swatch click)
-await page.locator('.jungle-map .spot', { hasText: 'Colour Cave' }).click();
+// Creative Corner: the colouring fix (measure the canvas after each swatch click)
+await page.locator('.jungle-map .spot', { hasText: 'Creative Corner' }).click();
 await page.waitForTimeout(500);
 const canvas = page.locator('canvas').first();
 await canvas.scrollIntoViewIfNeeded();
@@ -88,10 +86,10 @@ ok('colour fix: red stroke survives after choosing blue', counts.red > 100, `red
 ok('colour fix: blue stroke painted', counts.blue > 100, `blue px=${counts.blue}`);
 await page.screenshot({ path: 'tests/screens/03-colour.png', fullPage: true });
 
-// Back to the map, then Shape Meadow
+// Back to the map, then Puzzle Forest
 await page.getByRole('button', { name: /Back to the map/ }).click();
 await page.waitForTimeout(400);
-await page.locator('.jungle-map .spot', { hasText: 'Shape Meadow' }).click();
+await page.locator('.jungle-map .spot', { hasText: 'Puzzle Forest' }).click();
 await page.waitForSelector('text=/Tap the (circle|square|triangle)!/', { timeout: 4000 }).catch(() => {});
 ok('shape meadow room asks a question', /Tap the (circle|square|triangle)!/.test(await page.textContent('body')));
 await page.screenshot({ path: 'tests/screens/04-shape.png' });
@@ -109,21 +107,33 @@ await page.waitForTimeout(300);
 ok('maths chapters render after switching tab', (await page.locator('[aria-label="Maths chapters"] button').count()) >= 2);
 await page.screenshot({ path: 'tests/screens/05-middle-map.png', fullPage: true });
 
-// 4. Classes 8–10 Study Hub via Class 8 student
+// 4. Classes 8–10 Modern Study Hall via Class 8 student
 await signIn('student1040@demo.school');
-await page.waitForSelector('text=Overview', { timeout: 6000 }).catch(() => {});
-await page.getByRole('button', { name: 'Timetable', exact: true }).click();
+await page.waitForSelector('text=Today’s timetable', { timeout: 6000 }).catch(() => {});
+const hub = await page.textContent('body');
+ok('study hall dashboard renders', hub.includes('Today’s timetable') && hub.includes('Upcoming assignments'));
+ok('academic overview KPIs render', hub.includes('Attendance') && hub.includes('Pending assignments') && hub.includes('Academic progress'));
+ok('subject progress and countdown render', hub.includes('Subject progress') && hub.includes('Examination countdown'));
+ok('achievements render with no cartoon mascot', hub.includes('Achievements') && (await page.locator('.ms svg[aria-label]').count()) === 0);
+await page.getByRole('button', { name: 'My Classes', exact: true }).click();
 await page.waitForSelector('[aria-label="Weekly timetable"]', { timeout: 4000 }).catch(() => {});
-ok('timetable renders from database', (await page.locator('[aria-label="Weekly timetable"]').count()) === 1);
-await page.getByRole('button', { name: 'Calendar', exact: true }).click();
-await page.waitForSelector('[role="grid"][aria-label="Calendar"]', { timeout: 4000 }).catch(() => {});
-ok('calendar renders', (await page.locator('[role="grid"][aria-label="Calendar"]').count()) === 1);
+ok('my classes shows timetable from database', (await page.locator('[aria-label="Weekly timetable"]').count()) === 1);
+await page.getByRole('button', { name: 'Examinations', exact: true }).click();
+await page.waitForTimeout(300);
+ok('examinations view renders', (await page.textContent('body')).includes('Examination countdown'));
 await page.getByRole('button', { name: 'Results', exact: true }).click();
 await page.waitForTimeout(300);
-ok('results chart renders', (await page.locator('[aria-label="Score by subject"]').count()) === 1 || (await page.textContent('body')).includes('No marks published'));
-await page.getByRole('button', { name: 'Report card', exact: true }).click();
-await page.waitForTimeout(500);
+ok('results view renders subject performance', (await page.textContent('body')).includes('Subject performance'));
 ok('report card renders with print button', (await page.getByRole('button', { name: /Print/ }).count()) === 1);
+await page.getByRole('button', { name: 'Assignments', exact: true }).click();
+await page.waitForTimeout(300);
+ok('assignments view renders', (await page.textContent('body')).includes('Assignments'));
+await page.getByRole('button', { name: 'Study Planner', exact: true }).click();
+await page.waitForTimeout(300);
+ok('study planner renders weekly plan', (await page.textContent('body')).includes('Weekly plan'));
+await page.getByRole('button', { name: 'Learning Materials', exact: true }).click();
+await page.waitForTimeout(300);
+ok('learning materials empty state renders', (await page.textContent('body')).includes('appear here when your teachers upload'));
 await page.screenshot({ path: 'tests/screens/06-senior-report.png', fullPage: true });
 
 // 5. Teacher, admin and office (unchanged from before)

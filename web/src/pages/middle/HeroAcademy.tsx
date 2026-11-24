@@ -6,6 +6,9 @@ import { HEROES, HeroAvatar } from '../../components/Heroes';
 import { Character } from '../../components/Character';
 import { SpeechBubble } from '../../components/Speech';
 
+/** Rank titles from XP. Thresholds are placeholders to confirm with the school. */
+const rankFor = (xp: number) => (xp >= 1500 ? 'Hero Legend' : xp >= 800 ? 'Gold Explorer' : xp >= 300 ? 'Silver Explorer' : 'Bronze Explorer');
+
 /** Classes 4–7: Adventure Academy. Subject learning map, chapters, XP, badges, streak and a daily challenge. */
 export function HeroAcademy({ studentId, studentName, hero, className, onExit }: {
   studentId: number; studentName: string; hero: string; className: string; onExit: () => void;
@@ -94,6 +97,7 @@ export function HeroAcademy({ studentId, studentName, hero, className, onExit }:
             </div>
             <div className="xp-track" role="progressbar" aria-label="XP to next level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={into}><div className="xp-fill" ref={xpFill} /></div>
             <div className="muted">{100 - into} XP to level {level + 1}</div>
+            <div style={{ fontWeight: 700 }}>🏆 Rank: {rankFor(xp)}</div>
             <div className="row">{badges.map((b) => <span key={b.label} className={`badge-chip ${b.got ? 'got' : ''}`}>{b.got ? '🏅' : '🔒'} {b.label}</span>)}</div>
           </div>
         </div>
@@ -123,6 +127,7 @@ export function HeroAcademy({ studentId, studentName, hero, className, onExit }:
             <div className="row">
               <SpeechBubble tone="dark">{daily?.done_today ? 'Challenge done! Great work.' : 'Earn bonus XP today!'}</SpeechBubble>
               <Character kind="nova" mood={daily?.done_today ? 'excited' : 'happy'} pose="point" size={90} />
+              <Character kind="max" mood="thinking" size={80} label="Max the mentor" />
             </div>
           </div>
           {daily?.activity && !daily.done_today && <button className="btn primary" onClick={() => { setSubject(daily.activity.content.subject); setOpenId(daily.activity.id); }}>Start challenge</button>}

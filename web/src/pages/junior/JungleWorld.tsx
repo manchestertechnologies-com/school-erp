@@ -29,6 +29,11 @@ export function JungleWorld({ studentId, studentName, hero, onExit, exitLabel = 
     api(`/learning/progress/${studentId}`).then((p) => setStars(p.stars)).catch(() => {});
   }, [studentId]);
 
+  const [doneToday, setDoneToday] = useState(0);
+  useEffect(() => {
+    api(`/learning/today/${studentId}`).then((t) => setDoneToday(t.done_today)).catch(() => {});
+  }, [studentId, stars]);
+
   const scene = useGsap((_ctx, root) => {
     if (reduced()) return;
     gsap.to('.j-sun', { rotation: 360, duration: 40, repeat: -1, ease: 'none', transformOrigin: '50% 50%' });
@@ -121,7 +126,7 @@ export function JungleWorld({ studentId, studentName, hero, onExit, exitLabel = 
                 <div className="j-vine" style={{ position: 'absolute', left: 70, top: -260, width: 7, height: 280, background: 'linear-gradient(#2f6b22,#4f9a36)', borderRadius: 4, zIndex: 0, transformOrigin: '50% 0%' }} aria-hidden="true" />
                 <Character kind="momo" mood={mood} pose="wave" size={170} label="Momo the monkey guide" onClick={() => setMood('excited')} />
               </div>
-              <SpeechBubble>{nudge ? 'Psst! Want to try Number River?' : 'Hi! Pick a place on the map. Tap me to say hello!'}</SpeechBubble>
+              <SpeechBubble>{nudge ? 'Psst! Want to try Number Island?' : 'Hi! Pick a place on the map. Tap me to say hello!'}</SpeechBubble>
             </div>
             <h1 style={{ fontSize: 40, margin: '0 0 12px' }}>Momo’s Jungle</h1>
             {!activities && <div className="skeleton" style={{ minHeight: 320 }} />}
@@ -133,6 +138,18 @@ export function JungleWorld({ studentId, studentName, hero, onExit, exitLabel = 
               <Character kind="bubbles" mood="happy" pose="wave" size={90} />
               <Character kind="leo" mood="idle" size={90} />
               <span className="muted" style={{ fontWeight: 700 }}>Bubbles and Leo are cheering you on!</span>
+            </div>
+            <div className="card" style={{ marginTop: 18, display: 'grid', gap: 10, maxWidth: 560 }}>
+              <strong style={{ fontSize: 20 }}>Daily mission</strong>
+              <span className="muted" style={{ fontWeight: 700 }}>Complete 3 fun activities to earn a badge!</span>
+              <div className="bar" role="progressbar" aria-label="Daily mission progress" aria-valuemin={0} aria-valuemax={3} aria-valuenow={Math.min(doneToday, 3)}><i style={{ width: `${Math.min(100, (doneToday / 3) * 100)}%` }} /></div>
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 700 }}>{Math.min(doneToday, 3)} / 3 done today</span>
+                {doneToday >= 3 && <span className="badge-chip">🏅 Daily badge earned!</span>}
+              </div>
+              <div className="row" style={{ alignItems: 'center', gap: 10 }}>
+                <strong>My Rewards</strong><Stars count={Math.min(3, Math.floor(stars / 3))} /><span>{stars} stars</span>
+              </div>
             </div>
           </>
         )}

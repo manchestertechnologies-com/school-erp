@@ -65,6 +65,12 @@ export function Character({ kind = 'momo', mood = 'idle', pose = 'none', size = 
       };
       window.addEventListener('pointermove', move);
 
+      // Entrance: squash on landing, overshoot, then settle (cartoon-style, not a plain fade)
+      gsap.timeline()
+        .from(svg, { y: -60, scaleY: 0.7, scaleX: 1.12, duration: 0.5, ease: 'bounce.out' })
+        .to(svg, { scaleY: 0.9, scaleX: 1.08, duration: 0.12, ease: 'power1.out' })
+        .to(svg, { scaleY: 1, scaleX: 1, duration: 0.5, ease: 'elastic.out(1, 0.4)' });
+
       // Mood motion
       if (mood === 'excited') gsap.to(svg, { y: -10, duration: 0.35, yoyo: true, repeat: -1, ease: 'power1.inOut' });
       if (mood === 'surprised') gsap.fromTo(svg, { scale: 0.94 }, { scale: 1.06, duration: 0.18, yoyo: true, repeat: 1 });
@@ -79,7 +85,7 @@ export function Character({ kind = 'momo', mood = 'idle', pose = 'none', size = 
       // Poses
       const armOrigin = { r: '0% 100%', l: '100% 100%' };
       if (pose === 'wave') {
-        gsap.to('.arm-r', { rotation: -28, transformOrigin: armOrigin.r, duration: 0.25, yoyo: true, repeat: -1, repeatDelay: 2.4, ease: 'sine.inOut' });
+        gsap.to('.arm-r', { rotation: -28, transformOrigin: armOrigin.r, duration: 0.25, yoyo: true, repeat: -1, repeatDelay: 2.4, ease: 'elastic.out(1, 0.45)' });
       }
       if (pose === 'point') gsap.to('.arm-r', { rotation: 52, transformOrigin: armOrigin.r, duration: 0.4, ease: 'back.out(1.6)' });
       if (pose === 'celebrate') {

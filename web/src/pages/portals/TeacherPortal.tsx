@@ -1,3 +1,4 @@
+import { KA_SUBJECTS_ALL } from '../../lib/syllabus';
 import React, { useEffect, useState } from 'react';
 import { Shell } from '../../components/Shell';
 import { api, upload } from '../../lib/api';
@@ -83,7 +84,7 @@ function HomeworkPanel({ classId }: { classId: number }) {
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <form className="card" onSubmit={create} style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))' }}>
-        <label className="field">Subject<select className="select" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })}>{['English', 'Maths', 'Science', 'Social Studies'].map((s) => <option key={s}>{s}</option>)}</select></label>
+        <label className="field">Subject<select className="select" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })}>{KA_SUBJECTS_ALL.map((s) => <option key={s}>{s}</option>)}</select></label>
         <label className="field">Title<input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
         <label className="field">Due date<input className="input" type="date" required value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></label>
         <label className="field" style={{ gridColumn: '1 / -1' }}>Instructions<textarea className="input" rows={2} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} /></label>
@@ -116,7 +117,7 @@ function MarksPanel({ classId }: { classId: number }) {
       <h3>Enter marks</h3>
       <StudentSelect value={sid} onChange={setSid} students={students.data || []} />
       <div className="grid-auto" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))' }}>
-        <label className="field">Subject<select className="select" value={f.subject} onChange={(e) => setF({ ...f, subject: e.target.value })}>{['English', 'Maths', 'Science', 'Social Studies'].map((s) => <option key={s}>{s}</option>)}</select></label>
+        <label className="field">Subject<select className="select" value={f.subject} onChange={(e) => setF({ ...f, subject: e.target.value })}>{KA_SUBJECTS_ALL.map((s) => <option key={s}>{s}</option>)}</select></label>
         <label className="field">Exam<select className="select" value={f.exam} onChange={(e) => setF({ ...f, exam: e.target.value })}>{['Unit test', 'Term 1', 'Term 2'].map((s) => <option key={s}>{s}</option>)}</select></label>
         <label className="field">Score<input className="input" type="number" min={0} required value={f.score} onChange={(e) => setF({ ...f, score: e.target.value })} /></label>
         <label className="field">Out of<input className="input" type="number" min={1} required value={f.max} onChange={(e) => setF({ ...f, max: e.target.value })} /></label>
