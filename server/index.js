@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { db, audit } from './db.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const uploadDir = path.join(here, 'uploads');
+const uploadDir = process.env.UPLOAD_DIR || (process.env.VERCEL ? '/tmp/school-uploads' : path.join(here, 'uploads'));
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -18,6 +18,18 @@ if (!JWT_SECRET) {
 const secret = JWT_SECRET || 'dev-only-secret-change-me';
 
 const app = express();
+// Allow the separately hosted frontend (for example Vercel) to call this API. Set ALLOWED_ORIGIN to its address.
+app.use((req, res, next) => {
+  const origin = process.env.ALLOWED_ORIGIN;
+  if (origin && req.headers.origin === origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
+    res.setHeader('Vary', 'Origin');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+  }
+  next();
+});
 app.use(express.json({ limit: '1mb' }));
 app.use('/uploads', express.static(uploadDir, { dotfiles: 'deny', index: false }));
 
@@ -606,4 +618,6 @@ app.use((err, req, res, _next) => {
 });
 
 const port = Number(process.env.PORT || 5050);
-app.listen(port, () => console.log(`Manchester Technologies ERP API on http://localhost:${port}`));
+// Vercel runs this app as a function (see api/index.js); locally it listens on a port.
+if (!process.env.VERCEL) app.listen(port, () => console.log(`Manchester Technologies ERP API on http://localhost:${port}`));
+export default app;

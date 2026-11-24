@@ -1,8 +1,0 @@
-node_modules/
-web/node_modules/
-web/dist/
-server/data/
-server/uploads/
-tests/screens/
-*.log
-.env

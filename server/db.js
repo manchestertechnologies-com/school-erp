@@ -6,7 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(here, 'data');
+// On Vercel the filesystem is temporary, so the demo database lives in /tmp and is re-seeded on a cold start.
+const dataDir = process.env.DATA_DIR || (process.env.VERCEL ? '/tmp/school-data' : path.join(here, 'data'));
 fs.mkdirSync(dataDir, { recursive: true });
 export const dbPath = path.join(dataDir, 'school.sqlite');
 
